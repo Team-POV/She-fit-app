@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "307649012870",
+    "project_id": "she-fit-97ccf",
+    "storage_bucket": "she-fit-97ccf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:307649012870:android:a815775b0bbb5551be5d07",
+        "android_client_info": {
+          "package_name": "com.example.she_fit_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHsGCxD9fp7FE64auo9ZPfJCwhNqWSZx4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
