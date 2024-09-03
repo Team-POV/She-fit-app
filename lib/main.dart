@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'She-Fit',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-     initialRoute: '/home', // Set the initial route to login
+      initialRoute: '/home', // Set the initial route to login
       routes: {
         '/home': (context) => HomePage(),
       },
