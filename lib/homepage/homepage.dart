@@ -1,30 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:she_fit_app/pages/reproductivehealth.dart';
-
-void main() => runApp(SheFitApp());
-
-class SheFitApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'She-Fit',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: HomePage(),
-    );
-  }
-}
+import 'package:she_fit_app/services/auth_services.dart';
 
 class HomePage extends StatelessWidget {
+  final AuthService _authService = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             Expanded(child: _buildMainContent(context)),
             _buildBottomNavBar(),
           ],
@@ -33,7 +20,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -43,8 +30,60 @@ class HomePage extends StatelessWidget {
             'She-Fit',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          CircleAvatar(
-            backgroundImage: AssetImage('assets/user_avatar.png'),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.logout),
+                onPressed: () async {
+                  try {
+                    await _authService.signOut();
+                    // Add a small delay to ensure Firebase completes the sign-out
+                    await Future.delayed(Duration(milliseconds: 500));
+
+                    if (context.mounted) {
+                      // Check if context is still valid
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Successfully signed out'),
+                          backgroundColor:
+                              const Color.fromARGB(255, 120, 213, 188),
+                        ),
+                      );
+
+                      // Navigate to login screen
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/signin',
+                        (Route<dynamic> route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      // Check if context is still valid
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to sign out: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              // Replace CircleAvatar with a more reliable implementation
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                ),
+                child: Icon(
+                  Icons.person,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
         ],
       ),

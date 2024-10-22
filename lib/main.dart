@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:she_fit_app/firebase_options.dart';
-import 'package:she_fit_app/homepage/homepage.dart'; // Import the HomePage widget
+import 'package:she_fit_app/homepage/homepage.dart';
+import 'package:she_fit_app/signIn-Up-Screen/signin_page.dart';
+import 'package:she_fit_app/signIn-Up-Screen/signup_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,9 +27,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      initialRoute: '/home', // Set the initial route to login
+      initialRoute: '/signin', // Set the initial route to login
       routes: {
         '/home': (context) => HomePage(),
+        '/signin': (context) => SignInPage(),
+        '/signup': (context) => SignUpPage(),
       },
     );
   }
