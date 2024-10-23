@@ -159,7 +159,7 @@ class _SignInPageState extends State<SignInPage>
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Your wellness journey starts here!',
+                            'Your wellness journey continues here!',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
