@@ -143,7 +143,7 @@ class _SignUpPageState extends State<SignUpPage>
                       Column(
                         children: [
                           Text(
-                            'Join SHEFTT!',
+                            'Join SHEFIT!',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
