@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:she_fit_app/pages/reproductivehealth.dart';
 import 'package:she_fit_app/services/auth_services.dart';
+import 'package:she_fit_app/pages/reproductivehealth.dart';
 
-class HomePage extends StatelessWidget {
+// Convert to StatefulWidget
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -260,11 +269,24 @@ class HomePage extends StatelessWidget {
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+
+          // Handle navigation based on index
+          if (index == 3) {
+            Navigator.pushNamed(context, '/calculator');
+          }
+        },
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today), label: 'Track'),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Community'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.calculate), label: 'Calculator'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
