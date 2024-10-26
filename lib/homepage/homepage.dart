@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:she_fit_app/services/auth_services.dart';
 import 'package:she_fit_app/pages/reproductivehealth.dart';
+import 'package:she_fit_app/pages/repHomepage.dart';
 
 // Convert to StatefulWidget
 class HomePage extends StatefulWidget {
@@ -185,7 +186,7 @@ class _HomePageState extends State<HomePage> {
         if (title == 'Reproductive Health') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ReproductiveHealthPage()),
+            MaterialPageRoute(builder: (context) => Rephomepage()),
           );
         }
       },
