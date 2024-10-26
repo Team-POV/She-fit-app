@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:she_fit_app/pages/reDeitpage.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-
+import 'package:she_fit_app/pages/reDeitpage.dart';
 // Enhanced model class for daily tracking data
 class DailyTrackingData {
   final DateTime date;
@@ -1206,13 +1207,35 @@ Widget _buildSymptomTracker() {
         },
       ),
     ),
-    floatingActionButton: FloatingActionButton(
-      backgroundColor: Color(0xFF26A69A),
-      child: Icon(Icons.save),
-      onPressed: _saveDailyData,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    floatingActionButton: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          FloatingActionButton(
+            heroTag: "saveButton",
+            backgroundColor: Color(0xFF26A69A),
+            child: Icon(Icons.save),
+            onPressed: _saveDailyData,
+          ),
+          FloatingActionButton(
+            heroTag: "nextButton",
+            backgroundColor: Color(0xFF26A69A),
+            child: Icon(Icons.arrow_forward),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserInfoForm()),
+              );
+            },
+          ),
+        ],
+      ),
     ),
   );
 }
+
   Future<void> _saveDailyData() async {
     try {
       showDialog(
@@ -1258,8 +1281,3 @@ Widget _buildSymptomTracker() {
   }
 }
 
-extension StringExtension on String {
-  String capitalize() {
-    return this.length > 0 ? '${this[0].toUpperCase()}${this.substring(1)}' : '';
-}
-}
