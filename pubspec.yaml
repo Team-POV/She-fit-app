@@ -18,6 +18,7 @@ dependencies:
   intl_utils: ^2.8.7
   intl: ^0.19.0
   table_calendar: ^3.1.2
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

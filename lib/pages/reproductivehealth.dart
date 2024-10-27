@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:she_fit_app/pages/reDeitpage.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'package:she_fit_app/pages/reDeitpage.dart';
 // Enhanced model class for daily tracking data
 class DailyTrackingData {
   final DateTime date;

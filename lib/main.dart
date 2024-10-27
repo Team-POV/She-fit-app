@@ -6,6 +6,8 @@ import 'package:she_fit_app/pages/reproductivehealth.dart';
 import 'package:she_fit_app/signIn-Up-Screen/signin_page.dart';
 import 'package:she_fit_app/signIn-Up-Screen/signup_page.dart';
 import 'package:she_fit_app/screens/calculator_home.dart';
+import 'package:she_fit_app/pages/preg-tracking.dart';
+
 // calculators
 import 'package:she_fit_app/routes/calculator_routes.dart';
 import 'package:she_fit_app/screens/calculators/due_date_calculator.dart';
@@ -46,7 +48,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomePage(),
         '/signin': (context) => SignInPage(),
         '/signup': (context) => SignUpPage(),
-        '/menstrual-tracker':(context) => ReproductiveHealthPage(),
+        '/menstrual-tracker': (context) => ReproductiveHealthPage(),
+        '/pregnancy-tracker': (context) => PregnancyTrackingPage(),
 
         // Calculator routes
         '/calculator': (context) => CalculatorHome(),
