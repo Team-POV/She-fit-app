@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class PregnancyTrackingPage extends StatefulWidget {
   @override
@@ -83,10 +84,127 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
     },
   };
 
+  List<Map<String, dynamic>> _weeklyData = [];
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    _checkInitialSetup();
+    _checkInitialSetup().then((_) {
+      if (!_isInitialSetup) {
+        _loadWeeklyData();
+      }
+    });
+  }
+
+  Future<void> _loadWeeklyData() async {
+    try {
+      String userId = _auth.currentUser!.uid;
+      var pregnancyDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('pregnancy')
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (pregnancyDoc.docs.isNotEmpty) {
+        var data = pregnancyDoc.docs.first.data();
+        var measurements = data['measurements'] as Map<String, dynamic>? ?? {};
+
+        List<Map<String, dynamic>> weeklyData = [];
+        measurements.forEach((date, value) {
+          weeklyData.add({
+            'date': DateTime.parse(date),
+            'weight': value['weight'] ?? 0.0,
+            'systolic': _parseBPValue(value['bloodPressure'], true),
+            'diastolic': _parseBPValue(value['bloodPressure'], false),
+            'kickCount': value['kickCount'] ?? 0,
+          });
+        });
+
+        weeklyData.sort((a, b) => (a['date'] as DateTime).compareTo(b['date']));
+
+        setState(() {
+          _weeklyData = weeklyData;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading weekly data: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  double _parseBPValue(String? bp, bool isSystolic) {
+    if (bp == null || !bp.contains('/')) return 0.0;
+    var parts = bp.split('/');
+    return double.tryParse(isSystolic ? parts[0] : parts[1]) ?? 0.0;
+  }
+
+  Widget _buildWeightGraph() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Weight Trend',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < _weeklyData.length) {
+                            return Text(
+                              DateFormat('MM/dd')
+                                  .format(_weeklyData[value.toInt()]['date']),
+                              style: TextStyle(fontSize: 10),
+                            );
+                          }
+                          return Text('');
+                        },
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: true),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: _weeklyData.asMap().entries.map((entry) {
+                        return FlSpot(
+                          entry.key.toDouble(),
+                          entry.value['weight'].toDouble(),
+                        );
+                      }).toList(),
+                      isCurved: true,
+                      color: Colors.blue,
+                      dotData: FlDotData(show: true),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _checkInitialSetup() async {
@@ -415,6 +533,7 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
         'symptoms': _selectedSymptoms,
         'kickCount': _kickCount,
         'notes': _notesController.text,
+        'medications': _medications,
         'timestamp': FieldValue.serverTimestamp(),
       };
 
@@ -442,6 +561,188 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
     }
   }
 
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        SizedBox(width: 4),
+        Text(label),
+      ],
+    );
+  }
+
+  Widget _buildKickCountGraph() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Fetal Movement Trend',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: BarChart(
+                BarChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        interval: 5,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < _weeklyData.length) {
+                            return Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                DateFormat('MM/dd')
+                                    .format(_weeklyData[value.toInt()]['date']),
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            );
+                          }
+                          return Text('');
+                        },
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: true),
+                  barGroups: _weeklyData.asMap().entries.map((entry) {
+                    return BarChartGroupData(
+                      x: entry.key,
+                      barRods: [
+                        BarChartRodData(
+                          toY: entry.value['kickCount'].toDouble(),
+                          color: Colors.purple,
+                          width: 16,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBPGraph() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Blood Pressure Trend',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        interval: 20,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < _weeklyData.length) {
+                            return Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                DateFormat('MM/dd')
+                                    .format(_weeklyData[value.toInt()]['date']),
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            );
+                          }
+                          return Text('');
+                        },
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: true),
+                  lineBarsData: [
+                    // Systolic pressure line
+                    LineChartBarData(
+                      spots: _weeklyData.asMap().entries.map((entry) {
+                        return FlSpot(
+                          entry.key.toDouble(),
+                          entry.value['systolic'].toDouble(),
+                        );
+                      }).toList(),
+                      isCurved: true,
+                      color: Colors.red,
+                      dotData: FlDotData(show: true),
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                    // Diastolic pressure line
+                    LineChartBarData(
+                      spots: _weeklyData.asMap().entries.map((entry) {
+                        return FlSpot(
+                          entry.key.toDouble(),
+                          entry.value['diastolic'].toDouble(),
+                        );
+                      }).toList(),
+                      isCurved: true,
+                      color: Colors.blue,
+                      dotData: FlDotData(show: true),
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Legend
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildLegendItem('Systolic', Colors.red),
+                  SizedBox(width: 20),
+                  _buildLegendItem('Diastolic', Colors.blue),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isInitialSetup) {
@@ -454,135 +755,185 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.save),
-            onPressed: _saveDailyTracking,
+            onPressed: () {
+              _saveDailyTracking().then((_) => _loadWeeklyData());
+            },
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadWeeklyData,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildWeeklyProgress(),
+                    SizedBox(height: 16),
+                    _buildCalendar(context),
+                    SizedBox(height: 16),
+                    _buildHealthTrendsSection(context),
+                    SizedBox(height: 24),
+                    _buildDailyTrackingSection(context),
+                    SizedBox(height: 16),
+                    _buildNotesSection(),
+                    SizedBox(height: 16),
+                    _buildMedicationsSection(),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildCalendar(BuildContext context) {
+    return TableCalendar(
+      firstDay: _lastPeriodDate!,
+      lastDay: _dueDate!,
+      focusedDay: _focusedDay,
+      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      calendarFormat: _calendarFormat,
+      onFormatChanged: (format) {
+        setState(() {
+          _calendarFormat = format;
+        });
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = focusedDay;
+        });
+        _loadDailyData(selectedDay);
+      },
+      calendarStyle: CalendarStyle(
+        selectedDecoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          shape: BoxShape.circle,
+        ),
+        todayDecoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withOpacity(0.3),
+          shape: BoxShape.circle,
+        ),
+      ),
+      headerStyle: HeaderStyle(
+        formatButtonVisible: true,
+        titleCentered: true,
+      ),
+    );
+  }
+
+  Widget _buildHealthTrendsSection(BuildContext context) {
+    return Column(
+      children: [
+        _buildSectionHeader('Health Trends', context),
+        _buildWeightGraph(),
+        SizedBox(height: 16),
+        _buildBPGraph(),
+        SizedBox(height: 16),
+        _buildKickCountGraph(),
+      ],
+    );
+  }
+
+  Widget _buildDailyTrackingSection(BuildContext context) {
+    return Column(
+      children: [
+        _buildSectionHeader('Daily Tracking', context),
+        _buildDailyTrackingForm(),
+        SizedBox(height: 16),
+        _buildKickCounter(),
+      ],
+    );
+  }
+
+  Widget _buildNotesSection() {
+    return Card(
+      child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWeeklyProgress(),
-            SizedBox(height: 16),
-            TableCalendar(
-              firstDay: _lastPeriodDate!,
-              lastDay: _dueDate!,
-              focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              calendarFormat: _calendarFormat,
-              onFormatChanged: (format) {
-                setState(() {
-                  _calendarFormat = format;
-                });
-              },
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-                // Load data for selected date
-                _loadDailyData(selectedDay);
-              },
-              // Calendar styling
-              calendarStyle: CalendarStyle(
-                selectedDecoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                todayDecoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              headerStyle: HeaderStyle(
-                formatButtonVisible: true,
-                titleCentered: true,
+            Text(
+              'Notes',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            TextField(
+              controller: _notesController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Add any notes or thoughts for the day...',
+                border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
-            _buildDailyTrackingForm(),
-            SizedBox(height: 16),
-            _buildKickCounter(),
-            SizedBox(height: 16),
-            // Notes section
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Notes',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 10),
-                    TextField(
-                      controller: _notesController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Add any notes or thoughts for the day...',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMedicationsSection() {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Medications',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
-            // Medication tracking
-            Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Medications',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 10),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: _medications.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(_medications[index]),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete),
-                            onPressed: () {
-                              setState(() {
-                                _medications.removeAt(index);
-                              });
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Add Medication',
-                        suffixIcon: IconButton(
-                          icon: Icon(Icons.add),
-                          onPressed: () {
-                            // Add medication logic
-                            if (_notesController.text.isNotEmpty) {
-                              setState(() {
-                                _medications.add(_notesController.text);
-                                _notesController.clear();
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+            SizedBox(height: 10),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: _medications.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_medications[index]),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      setState(() {
+                        _medications.removeAt(index);
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Add Medication',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: () {
+                    if (_notesController.text.isNotEmpty) {
+                      setState(() {
+                        _medications.add(_notesController.text);
+                        _notesController.clear();
+                      });
+                    }
+                  },
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).primaryColor,
         ),
       ),
     );

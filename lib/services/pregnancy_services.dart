@@ -7,46 +7,6 @@ class PregnancyService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _currentPregnancyId;
 
-  final Map<int, Map<String, dynamic>> weeklyInfo = {
-    1: {
-      'development': 'Fertilization occurs',
-      'size': 'Microscopic',
-      'commonSymptoms': ['Missed period', 'Fatigue', 'Tender breasts'],
-      'recommendations': [
-        'Start taking prenatal vitamins',
-        'Quit smoking',
-        'Avoid alcohol'
-      ],
-      'appointments': ['Schedule first prenatal visit'],
-    },
-    // Add info for weeks 2-42...
-    13: {
-      'development': 'Second trimester begins',
-      'size': 'Size of a lemon',
-      'commonSymptoms': ['Less nausea', 'More energy', 'Visible bump'],
-      'recommendations': ['Start pregnancy exercises', 'Plan maternity leave'],
-      'appointments': ['Second trimester screening'],
-    },
-    28: {
-      'development': 'Third trimester begins',
-      'size': 'Size of an eggplant',
-      'commonSymptoms': [
-        'Back pain',
-        'Shortness of breath',
-        'Frequent urination'
-      ],
-      'recommendations': ['Monitor kick counts', 'Prepare hospital bag'],
-      'appointments': ['Glucose screening test'],
-    },
-    40: {
-      'development': 'Full term',
-      'size': 'Size of a watermelon',
-      'commonSymptoms': ['Braxton Hicks contractions', 'Pelvic pressure'],
-      'recommendations': ['Watch for labor signs', 'Rest frequently'],
-      'appointments': ['Weekly check-ups'],
-    },
-  };
-
   Future<String> _ensurePregnancyDocument() async {
     if (_currentPregnancyId != null) {
       return _currentPregnancyId!;
