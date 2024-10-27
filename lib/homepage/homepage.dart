@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:she_fit_app/Fiteness/fitnessHomepage.dart';
+import 'package:she_fit_app/MentalWellbeing/MentalHomepage.dart';
 import 'package:she_fit_app/services/auth_services.dart';
 import 'package:she_fit_app/pages/reproductivehealth.dart';
 import 'package:she_fit_app/pages/repHomepage.dart';
 
-// Convert to StatefulWidget
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -18,7 +19,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE0F2F1), // Light teal background
+      backgroundColor: Color(0xFFE0F2F1),
       body: SafeArea(
         child: Column(
           children: [
@@ -153,6 +154,10 @@ class _HomePageState extends State<HomePage> {
           Icons.favorite,
           context,
           gradientColors: [Color(0xFF26A69A), Color(0xFF80CBC4)],
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Rephomepage()),
+          ),
         ),
         SizedBox(height: 20),
         _buildCategoryCard(
@@ -161,6 +166,10 @@ class _HomePageState extends State<HomePage> {
           Icons.fitness_center,
           context,
           gradientColors: [Color(0xFF00897B), Color(0xFF4DB6AC)],
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => DashboardPage()),
+          ),
         ),
         SizedBox(height: 20),
         _buildCategoryCard(
@@ -169,6 +178,10 @@ class _HomePageState extends State<HomePage> {
           Icons.self_improvement,
           context,
           gradientColors: [Color(0xFF00796B), Color(0xFF26A69A)],
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Mentalhomepage()),
+          ),
         ),
       ],
     );
@@ -180,16 +193,10 @@ class _HomePageState extends State<HomePage> {
     IconData icon,
     BuildContext context, {
     required List<Color> gradientColors,
+    required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: () {
-        if (title == 'Reproductive Health') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Rephomepage()),
-          );
-        }
-      },
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -276,7 +283,6 @@ class _HomePageState extends State<HomePage> {
             _selectedIndex = index;
           });
 
-          // Handle navigation based on index
           if (index == 3) {
             Navigator.pushNamed(context, '/calculator');
           }

@@ -18,8 +18,15 @@ dependencies:
   intl_utils: ^2.8.7
   intl: ^0.19.0
   table_calendar: ^3.1.2
+<<<<<<< Updated upstream
   provider: ^6.1.2
 
+=======
+  google_sign_in: ^6.2.1
+  http: ^1.2.2
+  fl_chart: ^0.69.0
+  sensors_plus: ^6.1.0
+>>>>>>> Stashed changes
 dev_dependencies:
   flutter_test:
     sdk: flutter

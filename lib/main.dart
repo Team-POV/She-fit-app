@@ -21,8 +21,10 @@ import 'package:she_fit_app/screens/calculators/ultrasound_due_date_calculator.d
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+    
   );
   runApp(MyApp());
 }
