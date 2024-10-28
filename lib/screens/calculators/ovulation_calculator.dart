@@ -4,6 +4,8 @@ import '../../widgets/shared_widgets.dart';
 import '../../utils/custom_date_utils.dart';
 
 class OvulationCalculatorPage extends StatefulWidget {
+  const OvulationCalculatorPage({Key? key}) : super(key: key);
+
   @override
   _OvulationCalculatorPageState createState() =>
       _OvulationCalculatorPageState();
@@ -15,61 +17,94 @@ class _OvulationCalculatorPageState extends State<OvulationCalculatorPage> {
   int _cycleLength = 28;
   Map<String, DateTime>? _result;
 
-  @override
-  Widget build(BuildContext context) {
-    return CalculatorBasePage(
-      title: 'Ovulation Calculator',
-      description: '''
-The Ovulation Calculator helps you determine your most fertile days to maximize your chances of conception. It calculates:
-• Your estimated ovulation date
-• Your fertile window (5 days before to 1 day after ovulation)
-• Your best days for conception
-Based on your cycle length, ovulation typically occurs 14 days before your next period.
-''',
-      content: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            _buildDatePicker(),
-            SizedBox(height: 20),
-            _buildCycleLengthPicker(),
-            SizedBox(height: 20),
-            _buildCalculateButton(),
-          ],
+  void _calculateOvulation() {
+    if (_lastPeriod == null) return;
+
+    try {
+      final calculationResult = PregnancyCalculations.calculateOvulation(
+        _lastPeriod!,
+        _cycleLength,
+      );
+
+      setState(() {
+        _result = {
+          'ovulation': calculationResult['ovulation'] ?? DateTime.now(),
+          'windowStart': calculationResult['windowStart'] ?? DateTime.now(),
+          'windowEnd': calculationResult['windowEnd'] ?? DateTime.now(),
+        };
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error calculating ovulation dates. Please try again.'),
+          backgroundColor: Colors.red,
         ),
-      ),
-      result: _result != null ? _buildResult() : null,
-    );
+      );
+    }
+  }
+
+  Future<void> _selectDate() async {
+    try {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: _lastPeriod ?? DateTime.now(),
+        firstDate: DateTime.now().subtract(const Duration(days: 90)),
+        lastDate: DateTime.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                    primary: Theme.of(context).primaryColor,
+                  ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (picked != null && mounted) {
+        setState(() => _lastPeriod = picked);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error selecting date. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDatePicker() {
-    return InkWell(
-      onTap: () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: _lastPeriod ?? DateTime.now(),
-          firstDate: DateTime.now().subtract(Duration(days: 90)),
-          lastDate: DateTime.now(),
-        );
-        if (date != null) {
-          setState(() => _lastPeriod = date);
-        }
-      },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: 'First Day of Last Period',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
+    return GestureDetector(
+      onTap: _selectDate,
+      child: AbsorbPointer(
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'First Day of Last Period',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            errorText: _lastPeriod == null ? 'Please select a date' : null,
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(_lastPeriod == null
-                ? 'Select date'
-                : CustomDateUtils.formatDate(_lastPeriod!)),
-            Icon(Icons.calendar_today),
-          ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _lastPeriod == null
+                    ? 'Select date'
+                    : CustomDateUtils.formatDate(_lastPeriod!),
+                style: TextStyle(
+                  color: _lastPeriod == null
+                      ? Theme.of(context).hintColor
+                      : Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const Icon(Icons.calendar_today),
+            ],
+          ),
         ),
       ),
     );
@@ -79,7 +114,7 @@ Based on your cycle length, ovulation typically occurs 14 days before your next 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Cycle Length (days)'),
+        const Text('Cycle Length (days)'),
         Slider(
           value: _cycleLength.toDouble(),
           min: 21,
@@ -90,42 +125,35 @@ Based on your cycle length, ovulation typically occurs 14 days before your next 
             setState(() => _cycleLength = value.round());
           },
         ),
+        Text(
+          'Selected: $_cycleLength days',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }
 
   Widget _buildCalculateButton() {
     return ElevatedButton(
-      onPressed: _lastPeriod == null
-          ? null
-          : () {
-              if (_formKey.currentState!.validate()) {
-                setState(() {
-                  final calculationResult =
-                      PregnancyCalculations.calculateOvulation(
-                    _lastPeriod!,
-                    _cycleLength,
-                  );
-                  _result = Map<String, DateTime>.from(calculationResult);
-                });
-              }
-            },
-      child: Text('Calculate'),
+      onPressed: _lastPeriod == null ? null : _calculateOvulation,
       style: ElevatedButton.styleFrom(
-        minimumSize: Size(double.infinity, 50),
+        minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
       ),
+      child: const Text('Calculate'),
     );
   }
 
   Widget _buildResult() {
+    if (_result == null) return const SizedBox.shrink();
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -137,7 +165,7 @@ Based on your cycle length, ovulation typically occurs 14 days before your next 
                 color: Theme.of(context).primaryColor,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildResultRow(
               'Ovulation Date',
               CustomDateUtils.formatDate(_result!['ovulation']!),
@@ -162,17 +190,44 @@ Based on your cycle length, ovulation typically occurs 14 days before your next 
 
   Widget _buildResultRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
           Text(
             value,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CalculatorBasePage(
+      title: 'Ovulation Calculator',
+      description: '''
+The Ovulation Calculator helps you determine your most fertile days to maximize your chances of conception. It calculates:
+• Your estimated ovulation date
+• Your fertile window (5 days before to 1 day after ovulation)
+• Your best days for conception
+Based on your cycle length, ovulation typically occurs 14 days before your next period.
+''',
+      content: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildDatePicker(),
+            const SizedBox(height: 20),
+            _buildCycleLengthPicker(),
+            const SizedBox(height: 20),
+            _buildCalculateButton(),
+          ],
+        ),
+      ),
+      result: _buildResult(),
     );
   }
 }

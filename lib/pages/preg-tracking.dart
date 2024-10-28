@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PregnancyTrackingPage extends StatefulWidget {
   @override
@@ -59,6 +60,26 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
       'size': 'Microscopic',
       'tips': ['Start taking prenatal vitamins', 'Avoid alcohol and smoking'],
       'checkups': ['Schedule first prenatal visit'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    2: {
+      'title': 'Second Week',
+      'development': 'Ovulation occurs',
+      'size': 'Microscopic',
+      'tips': ['Maintain a healthy diet', 'Stay active'],
+      'checkups': ['Track ovulation symptoms'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    3: {
+      'title': 'Third Week',
+      'development': 'Fertilized egg divides',
+      'size': 'Microscopic',
+      'tips': ['Avoid stress', 'Monitor early signs of pregnancy'],
+      'checkups': ['No checkup necessary yet'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
     },
     4: {
       'title': 'First Month',
@@ -66,6 +87,35 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
       'size': 'Poppy seed',
       'tips': ['Track early pregnancy symptoms', 'Stay hydrated'],
       'checkups': ['First ultrasound'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    5: {
+      'title': 'Fifth Week',
+      'development': 'Heart begins to beat',
+      'size': 'Apple seed',
+      'tips': ['Take folic acid', 'Eat small, frequent meals'],
+      'checkups': ['Check blood pressure'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    6: {
+      'title': 'Sixth Week',
+      'development': 'Facial features start forming',
+      'size': 'Pea',
+      'tips': ['Eat nutrient-rich foods', 'Get enough sleep'],
+      'checkups': ['Blood test for hCG levels'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    7: {
+      'title': 'Seventh Week',
+      'development': 'Brain development accelerates',
+      'size': 'Blueberry',
+      'tips': ['Rest when tired', 'Eat protein-rich foods'],
+      'checkups': ['Ultrasound to check development'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
     },
     8: {
       'title': 'Second Month',
@@ -73,14 +123,308 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
       'size': 'Kidney bean',
       'tips': ['Start pregnancy exercises', 'Get adequate rest'],
       'checkups': ['Check blood pressure and weight'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
     },
-    // Add more weeks as needed...
+    9: {
+      'title': 'Ninth Week',
+      'development': 'Muscles start to form',
+      'size': 'Grape',
+      'tips': ['Keep a balanced diet', 'Wear comfortable clothes'],
+      'checkups': ['Blood test to check hormone levels'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    10: {
+      'title': 'Tenth Week',
+      'development': 'Limbs and fingers develop',
+      'size': 'Strawberry',
+      'tips': ['Stay active', 'Increase calcium intake'],
+      'checkups': ['Heartbeat check via Doppler'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    11: {
+      'title': 'Eleventh Week',
+      'development': 'Nails and bones form',
+      'size': 'Fig',
+      'tips': ['Take prenatal vitamins', 'Practice good posture'],
+      'checkups': ['Nuchal translucency scan'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    12: {
+      'title': 'Third Month',
+      'development': 'All major organs are formed',
+      'size': 'Lime',
+      'tips': ['Continue eating a balanced diet', 'Stay hydrated'],
+      'checkups': ['First trimester screening'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/first-trimester#body-changes',
+    },
+    13: {
+      'title': 'Thirteenth Week',
+      'development': 'Baby\'s fingerprints form',
+      'size': 'Peach',
+      'tips': ['Avoid excessive sugar', 'Exercise regularly'],
+      'checkups': ['Genetic testing (if needed)'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    14: {
+      'title': 'Fourteenth Week',
+      'development': 'Baby\'s face becomes more defined',
+      'size': 'Lemon',
+      'tips': ['Eat fiber-rich foods', 'Get plenty of sleep'],
+      'checkups': ['Check baby’s growth via ultrasound'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    15: {
+      'title': 'Fifteenth Week',
+      'development': 'Baby can move and stretch',
+      'size': 'Orange',
+      'tips': ['Drink lots of water', 'Engage in light exercises'],
+      'checkups': ['Blood tests for anemia'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    16: {
+      'title': 'Fourth Month',
+      'development': 'Baby\'s skeletal system develops',
+      'size': 'Avocado',
+      'tips': ['Eat calcium-rich foods', 'Avoid lifting heavy objects'],
+      'checkups': ['Fetal anatomy scan'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    17: {
+      'title': 'Seventeenth Week',
+      'development': 'Baby\'s hearing develops',
+      'size': 'Turnip',
+      'tips': ['Talk and sing to your baby', 'Do pelvic floor exercises'],
+      'checkups': ['Check weight and blood pressure'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    18: {
+      'title': 'Eighteenth Week',
+      'development': 'Baby starts to move and kick',
+      'size': 'Sweet potato',
+      'tips': ['Track fetal movements', 'Stay physically active'],
+      'checkups': ['Ultrasound to check baby’s position'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    19: {
+      'title': 'Nineteenth Week',
+      'development': 'Baby\'s senses develop',
+      'size': 'Mango',
+      'tips': ['Practice good posture', 'Eat iron-rich foods'],
+      'checkups': ['Ultrasound for fetal anomaly screening'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    20: {
+      'title': 'Fifth Month',
+      'development': 'Baby can hear sounds',
+      'size': 'Banana',
+      'tips': ['Eat nutrient-dense foods', 'Consider prenatal yoga'],
+      'checkups': ['Mid-pregnancy ultrasound'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    21: {
+      'title': 'Twenty-first Week',
+      'development': 'Baby starts swallowing amniotic fluid',
+      'size': 'Carrot',
+      'tips': [
+        'Stay hydrated',
+        'Eat healthy fats for baby\'s brain development'
+      ],
+      'checkups': ['Routine blood pressure and weight check'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    22: {
+      'title': 'Twenty-second Week',
+      'development': 'Baby\'s hair starts to grow',
+      'size': 'Papaya',
+      'tips': ['Increase iron intake', 'Take short walks daily'],
+      'checkups': ['Check baby\'s position and growth'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    23: {
+      'title': 'Twenty-third Week',
+      'development': 'Baby\'s skin starts to thicken',
+      'size': 'Grapefruit',
+      'tips': ['Do gentle stretching', 'Monitor swelling in feet'],
+      'checkups': ['Glucose screening test'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    24: {
+      'title': 'Sixth Month',
+      'development': 'Baby\'s lungs start developing',
+      'size': 'Cantaloupe',
+      'tips': ['Stay physically active', 'Get plenty of sleep'],
+      'checkups': ['Routine prenatal visit'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    25: {
+      'title': 'Twenty-fifth Week',
+      'development': 'Baby starts responding to light',
+      'size': 'Cauliflower',
+      'tips': ['Practice relaxation techniques', 'Eat fiber-rich foods'],
+      'checkups': ['Check for gestational diabetes'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    26: {
+      'title': 'Twenty-sixth Week',
+      'development': 'Baby\'s lungs continue to mature',
+      'size': 'Zucchini',
+      'tips': [
+        'Take breaks to rest',
+        'Focus on maintaining healthy blood pressure'
+      ],
+      'checkups': ['Routine blood and urine tests'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/second-trimester',
+    },
+    27: {
+      'title': 'Seventh Month',
+      'development': 'Baby\'s eyes can open and close',
+      'size': 'Eggplant',
+      'tips': [
+        'Practice breathing exercises',
+        'Ensure adequate protein intake'
+      ],
+      'checkups': ['Check baby\'s heart rate and movements'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    28: {
+      'title': 'Twenty-eighth Week',
+      'development': 'Baby\'s brain activity increases',
+      'size': 'Butternut squash',
+      'tips': [
+        'Start planning birth preferences',
+        'Stay active but avoid overexertion'
+      ],
+      'checkups': ['Rh factor test (if needed)'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    29: {
+      'title': 'Twenty-ninth Week',
+      'development': 'Baby\'s muscles and lungs mature',
+      'size': 'Acorn squash',
+      'tips': ['Sleep on your side', 'Take time for self-care'],
+      'checkups': ['Routine prenatal visit'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    30: {
+      'title': 'Eighth Month',
+      'development': 'Baby\'s bones harden',
+      'size': 'Cabbage',
+      'tips': ['Eat small, frequent meals', 'Practice relaxation techniques'],
+      'checkups': ['Check baby\'s growth and position'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    31: {
+      'title': 'Thirty-first Week',
+      'development': 'Baby starts storing more fat',
+      'size': 'Coconut',
+      'tips': ['Take prenatal yoga', 'Monitor any discomfort'],
+      'checkups': ['Blood pressure and fetal heartbeat check'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    32: {
+      'title': 'Thirty-second Week',
+      'development': 'Baby\'s movements are more pronounced',
+      'size': 'Jicama',
+      'tips': ['Stay hydrated', 'Prepare baby\'s nursery'],
+      'checkups': ['Routine prenatal visit'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    33: {
+      'title': 'Thirty-third Week',
+      'development': 'Baby\'s immune system strengthens',
+      'size': 'Pineapple',
+      'tips': ['Take naps when needed', 'Continue healthy eating habits'],
+      'checkups': ['Ultrasound to check baby\'s growth and development'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    34: {
+      'title': 'Ninth Month',
+      'development': 'Baby starts descending into the pelvis',
+      'size': 'Butternut squash',
+      'tips': ['Practice breathing techniques', 'Pack hospital bag'],
+      'checkups': ['Routine prenatal visit'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    35: {
+      'title': 'Thirty-fifth Week',
+      'development': 'Baby\'s lungs almost fully developed',
+      'size': 'Honeydew melon',
+      'tips': ['Monitor contractions', 'Take frequent rest breaks'],
+      'checkups': ['Group B strep test'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    36: {
+      'title': 'Thirty-sixth Week',
+      'development': 'Baby gains more weight',
+      'size': 'Romaine lettuce',
+      'tips': ['Do gentle stretches', 'Prepare for labor'],
+      'checkups': ['Check baby’s position'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    37: {
+      'title': 'Tenth Month',
+      'development': 'Baby is considered full term',
+      'size': 'Swiss chard',
+      'tips': ['Finalize birth plan', 'Stay calm and relaxed'],
+      'checkups': ['Weekly doctor visits begin'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    38: {
+      'title': 'Thirty-eighth Week',
+      'development': 'Baby\'s organs are fully developed',
+      'size': 'Leek',
+      'tips': ['Get plenty of rest', 'Eat small, frequent meals'],
+      'checkups': ['Monitor baby’s movements'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
+    39: {
+      'title': 'Thirty-ninth Week',
+      'development': 'Baby continues to grow and gain weight',
+      'size': 'Pumpkin',
+      'tips': ['Stay prepared for labor', 'Monitor baby’s kicks'],
+      'checkups': ['Weekly doctor visit'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
+    },
     40: {
       'title': 'Final Week',
       'development': 'Baby is full term',
       'size': 'Watermelon',
       'tips': ['Monitor contractions', 'Pack hospital bag'],
       'checkups': ['Weekly doctor visits'],
+      'moreInfo':
+          'https://www.healthline.com/health/pregnancy/third-trimester-developing-baby',
     },
   };
 
@@ -358,6 +702,31 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
     }
   }
 
+  Widget _buildCheckupsList(List<String> checkups) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Checkups:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        ...checkups.map(
+          (checkup) => Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Text('• $checkup'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   Widget _buildWeeklyProgress() {
     Map<String, dynamic> currentStageInfo = _pregnancyStages[_currentWeek] ??
         {
@@ -366,44 +735,121 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
         };
 
     return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Week $_currentWeek of 40',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Week $_currentWeek of 40',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.info_outline),
+                  onPressed: () {
+                    if (currentStageInfo['moreInfo'] != null) {
+                      _launchURL(currentStageInfo['moreInfo']);
+                    }
+                  },
+                ),
+              ],
             ),
-            SizedBox(height: 10),
-            Text('$_remainingWeeks weeks until due date'),
+            Text(
+              '$_remainingWeeks weeks until due date',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
             SizedBox(height: 15),
             LinearProgressIndicator(
               value: _currentWeek / 40,
               minHeight: 10,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
             ),
             SizedBox(height: 20),
             Text(
               currentStageInfo['title'],
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue[600],
+              ),
             ),
-            SizedBox(height: 10),
-            Text('Development: ${currentStageInfo['development']}'),
-            if (currentStageInfo['size'] != null) ...[
-              SizedBox(height: 5),
-              Text('Baby Size: ${currentStageInfo['size']}'),
-            ],
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.child_care, color: Colors.blue),
+              title: Text('Development'),
+              subtitle: Text(currentStageInfo['development']),
+            ),
+            if (currentStageInfo['size'] != null)
+              ListTile(
+                leading: Icon(Icons.straighten, color: Colors.blue),
+                title: Text('Baby Size'),
+                subtitle: Text(currentStageInfo['size']),
+              ),
             if (currentStageInfo['tips'] != null) ...[
-              SizedBox(height: 10),
-              Text(
-                'Tips:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Divider(),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Tips:',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[600],
+                  ),
+                ),
               ),
               ...List<Widget>.from(
                 (currentStageInfo['tips'] as List).map(
                   (tip) => Padding(
-                    padding: EdgeInsets.only(left: 10),
-                    child: Text('• $tip'),
+                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle, size: 20, color: Colors.green),
+                        SizedBox(width: 8),
+                        Expanded(child: Text(tip)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            if (currentStageInfo['checkups'] != null) ...[
+              Divider(),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Checkups:',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[600],
+                  ),
+                ),
+              ),
+              ...List<Widget>.from(
+                (currentStageInfo['checkups'] as List).map(
+                  (checkup) => Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today,
+                            size: 20, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Expanded(child: Text(checkup)),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -439,6 +885,7 @@ class _PregnancyTrackingPageState extends State<PregnancyTrackingPage> {
               controller: _bloodPressureController,
               decoration: InputDecoration(
                 labelText: 'Blood Pressure',
+                hintText: 'eg 120/80',
                 border: OutlineInputBorder(),
               ),
             ),
