@@ -641,7 +641,7 @@ Widget _buildWeeklyProgress() {
                 const Color.fromARGB(255, 242, 231, 81),
                 () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Fitnesssreward()),
+                  MaterialPageRoute(builder: (context) => RewardsPage()),
                 ),
               ),
             ),
