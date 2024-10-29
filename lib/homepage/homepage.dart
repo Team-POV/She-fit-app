@@ -3,6 +3,7 @@ import 'package:she_fit_app/Fiteness/fitnessHomepage.dart';
 import 'package:she_fit_app/MentalWellbeing/MentalHomepage.dart';
 import 'package:she_fit_app/services/auth_services.dart';
 import 'package:she_fit_app/pages/repHomepage.dart';
+import 'package:she_fit_app/pages/check-state.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -180,6 +181,21 @@ class _HomePageState extends State<HomePage> {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => MentalWellbeingChatbot()),
+          ),
+        ),
+        SizedBox(height: 20),
+        _buildCategoryCard(
+          'abusive allert !',
+          'find what you have gone through',
+          Icons.self_improvement,
+          context,
+          gradientColors: [
+            Color.fromARGB(255, 220, 29, 12),
+            Color.fromARGB(255, 223, 90, 18)
+          ],
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => StatementCheckerPage()),
           ),
         ),
       ],
