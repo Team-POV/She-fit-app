@@ -282,17 +282,17 @@ class _HomePageState extends State<HomePage> {
             _selectedIndex = index;
           });
 
-          if (index == 3) {
+          if (index == 1) {
             Navigator.pushNamed(context, '/calculator');
           }
         },
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
+              icon: Icon(Icons.calculate), label: 'Calculator'),
+          BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today), label: 'Track'),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Community'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.calculate), label: 'Calculator'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
