@@ -18,13 +18,14 @@ import 'package:she_fit_app/screens/calculators/ovulation_calculator.dart';
 import 'package:she_fit_app/screens/calculators/period_calculator.dart';
 import 'package:she_fit_app/screens/calculators/pregnancy_test_calculator.dart';
 import 'package:she_fit_app/screens/calculators/ultrasound_due_date_calculator.dart';
+import 'package:she_fit_app/screens/calculators/GlycemicMonitoring.dart';
+import 'package:she_fit_app/screens/calculators/PrenatalMonitoring.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
-    
   );
   runApp(MyApp());
 }
@@ -56,7 +57,11 @@ class MyApp extends StatelessWidget {
         // Calculator routes
         '/calculator': (context) => CalculatorHome(),
         CalculatorRoutes.ovulation: (context) => OvulationCalculatorPage(),
+        CalculatorRoutes.GlycemicMonitoringPage: (context) =>
+            GlycemicMonitoringPage(),
         CalculatorRoutes.hcg: (context) => HCGCalculatorPage(),
+        CalculatorRoutes.PrenatalMonitoring: (context) =>
+            PrenatalMonitoringPage(),
         CalculatorRoutes.pregnancyTest: (context) =>
             PregnancyTestCalculatorPage(),
         CalculatorRoutes.period: (context) => PeriodCalculatorPage(),

@@ -34,10 +34,23 @@ class CalculatorHome extends StatelessWidget {
       icon: Icons.favorite,
     ),
     CalculatorInfo(
+      title: 'Glycemic Monitoring',
+      description: 'GMB (Glycemic Monitoring in Blood Sugar)',
+      route: CalculatorRoutes.GlycemicMonitoringPage,
+      icon: Icons.bloodtype,
+    ),
+    CalculatorInfo(
       title: 'Due Date Calculator',
       description: 'Calculate your estimated delivery date',
       route: CalculatorRoutes.dueDate,
       icon: Icons.child_care,
+    ),
+    CalculatorInfo(
+      title: 'Prenatal Monitoring',
+      description:
+          'Ultrasound is a routine part of prenatal care to monitor fetal development',
+      route: CalculatorRoutes.PrenatalMonitoring,
+      icon: Icons.woman_outlined,
     ),
     CalculatorInfo(
       title: 'IVF Due Date Calculator',

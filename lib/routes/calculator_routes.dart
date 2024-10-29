@@ -7,4 +7,6 @@ class CalculatorRoutes {
   static const String dueDate = '/due-date-calculator';
   static const String ivfDueDate = '/ivf-due-date-calculator';
   static const String ultrasoundDueDate = '/ultrasound-due-date-calculator';
+  static const String GlycemicMonitoringPage = '/GlycemicMonitoringPage';
+  static const String PrenatalMonitoring = '/PrenatalMonitoring';
 }
