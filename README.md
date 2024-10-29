@@ -1,16 +1,84 @@
-# she_fit_app
+She-Fit: Comprehensive Health Support for Women
+Team Name: Team P.O.V
+Hackathon: Shridevi National Level Hackathon 2024
+Theme: Medical Care
+Team Members:
 
-A new Flutter project.
+Rohith Krishna
+Goutham K P
+Akash Kumar Singh
+Rahul O P
+College: Dr. Ambedkar Institute of Technology
+Project Overview
+She-Fit is a mobile app designed to address the reproductive, physical, and mental health needs of women, especially in rural areas. This app leverages AI and machine learning to provide personalized guidance on menstrual cycles, pregnancy, fitness, nutrition, and mental well-being. Key features include a menstrual cycle tracker, nutrition recommendations, fitness challenges, and a mental health chatbot.
 
-## Getting Started
+Features
+Reproductive Health Tracking
 
-This project is a starting point for a Flutter application.
+Menstrual Cycle Calendar: Tracks menstrual phases and fertility windows.
+Pregnancy Timeline: Helps users estimate pregnancy milestones.
+Nutritional Recommendations
 
-A few resources to get you started if this is your first Flutter project:
+Personalized Plans: Provides nutrient recommendations based on individual weight and height.
+Diet Logging: Allows users to track food intake and receive personalized feedback.
+Fitness Tracking
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Activity Log: Records distance, calories burned, and workout details.
+Fitness Challenges: Offers tasks with rewards for achieving physical milestones.
+Mental Well-being Support
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Mental Health Chatbot: Delivers personalized wellness suggestions and answers queries related to reproductive health.
+Mood Tracking: Allows users to log their moods and receive tailored tips.
+Technical Approach
+Frontend: Flutter for a responsive, user-friendly interface.
+Backend: Firebase for database management and user authentication.
+AI and Machine Learning: TensorFlow and Vertex AI (GCP) for model training and deployment.
+Chatbot Integration: Google Dialogflow for natural language processing.
+Health Data Integration: Google Fit API for fitness data tracking.
+Media Management: Cloudinary for handling media uploads.
+Additional Tools: OpenCV and MediaPipe for tracking physical exercises.
+Getting Started
+Prerequisites
+Flutter SDK: Install Flutter
+Firebase Project: Set up a Firebase project with Realtime Database and Authentication.
+Google Fit API: Configure the Google Fit API for fitness tracking.
+Project Setup
+Clone the Repository
+
+bash
+Copy code
+git clone <repository-url>
+cd She-Fit
+Install Dependencies
+
+bash
+Copy code
+flutter pub get
+Firebase Configuration
+
+Add google-services.json to your project's android/app directory.
+Configure Firebase Authentication and Realtime Database in the Firebase Console.
+Google Fit API Configuration
+
+Obtain OAuth 2.0 credentials from the Google Cloud Console.
+Integrate with the Google Fit API following Google Fit API documentation.
+Cloudinary Setup (For Media Management)
+
+Set up a Cloudinary account and add your credentials in the project code where required.
+Running the App
+Launch the App
+
+bash
+Copy code
+flutter run
+Testing Features
+
+Reproductive Health Tracking: Track menstrual phases and log pregnancy-related data.
+Nutritional Tracking: Input and log meals for diet recommendations.
+Fitness Challenges: Log workouts, set goals, and view progress.
+Chatbot: Interact with the chatbot for health support and mental well-being tips.
+Additional Notes
+Challenges Addressed
+Data Collection: Integrated with available health resources for reliable data.
+Cultural Sensitivity: Developed user-friendly educational content to improve usability.
+User Education: Provided tutorials and guidance on health management.
