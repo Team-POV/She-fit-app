@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'dart:async';
 import 'dart:math';
+import 'dart:collection';
 
 import 'package:she_fit_app/Fiteness/fitnessAIAssistances.dart';
 import 'package:she_fit_app/Fiteness/fitnessTask.dart';
@@ -25,7 +26,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int timeInMinutes = 0;
   double avgPace = 0;
   int heartRate = 70;
-  
+
   // Enhanced activity metrics
   double currentSpeed = 0;
   double maxSpeed = 0;
@@ -33,7 +34,23 @@ class _DashboardPageState extends State<DashboardPage> {
   int cadence = 0;
   List<double> speedHistory = [];
   double elevationGain = 0;
-  
+
+  // Step detection variables
+  List<double> _accelerometerValues = [];
+  List<DateTime> _timestampedValues = [];
+  static const int _windowSize = 20;
+  static const double _stepThreshold = 12.0;
+  static const double _gravityThreshold = 9.8;
+  DateTime? _lastStepTime;
+  bool _isStepInProgress = true;
+  double _lastPeak = 0.0;
+  double _lastValley = 0.0;
+  bool _isPeak = false;
+  Queue<double> _recentMagnitudes = Queue<double>();
+  static const int _peakWindowSize = 5;
+  Timer? _timer;
+  DateTime _activityStartTime = DateTime.now();
+
   // Activity-specific constants
   final Map<String, ActivityMetrics> _activityMetrics = {
     'run': ActivityMetrics(
@@ -52,18 +69,9 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   };
 
-  // Step detection variables
-  List<double> _accelerometerValues = [];
-  List<DateTime> _timestampedValues = [];
-  static const int _windowSize = 20;
-  DateTime? _lastStepTime;
-  bool _isStepInProgress = false;
-  Timer? _timer;
-  DateTime _activityStartTime = DateTime.now();
-  
   // Firebase variables
   final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-  
+
   // Activity thresholds
   final Map<String, double> _thresholds = {
     'run': 12.5,
@@ -83,57 +91,103 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _initializeTracking() {
     _activityStartTime = DateTime.now();
-    
+
+    // Listen to accelerometer events
     accelerometerEvents.listen((AccelerometerEvent event) {
       _processAccelerometerData(event);
     });
-    
+
+    // Set up periodic updates
     _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _updateStats();
       _saveStatsToFirebase();
+    });
+
+    // Set up calibration timer
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      _calibrateStepDetection();
     });
   }
 
   void _processAccelerometerData(AccelerometerEvent event) {
     DateTime now = DateTime.now();
-    
-    double magnitude = sqrt(pow(event.x, 2) + pow(event.y, 2) + pow(event.z, 2));
-    
+
+    // Calculate the magnitude of acceleration
+    double magnitude =
+        sqrt(pow(event.x, 2) + pow(event.y, 2) + pow(event.z, 2));
+
+    // Remove gravity component
+    magnitude = magnitude - _gravityThreshold;
+
+    // Apply low-pass filter
     if (_accelerometerValues.isNotEmpty) {
-      magnitude = 0.8 * _accelerometerValues.last + 0.2 * magnitude;
+      magnitude = 0.1 * magnitude + 0.9 * _accelerometerValues.last;
     }
-    
+
+    // Store filtered magnitude
     _accelerometerValues.add(magnitude);
     _timestampedValues.add(now);
-    
+
+    // Maintain window size
     if (_accelerometerValues.length > _windowSize) {
       _accelerometerValues.removeAt(0);
       _timestampedValues.removeAt(0);
     }
-    
-    if (_accelerometerValues.length == _windowSize) {
-      _detectStep();
-      _updateRealTimeMetrics();
+
+    // Add to recent magnitudes queue
+    _recentMagnitudes.add(magnitude);
+    if (_recentMagnitudes.length > _peakWindowSize) {
+      _recentMagnitudes.removeFirst();
+    }
+
+    if (_recentMagnitudes.length == _peakWindowSize) {
+      _detectStepWithPeakValley(magnitude);
     }
   }
 
-  void _detectStep() {
+  void _detectStepWithMagnitude(double currentMagnitude) {
     ActivityMetrics metrics = _activityMetrics[currentActivity]!;
-    double threshold = _thresholds[currentActivity]!;
-    
-    double dynamicThreshold = _calculateDynamicThreshold();
-    
-    if (_accelerometerValues.length >= 3) {
-      double prev = _accelerometerValues[_accelerometerValues.length - 2];
-      double current = _accelerometerValues.last;
-      
-      if (!_isStepInProgress && 
-          current > dynamicThreshold && 
-          prev <= dynamicThreshold) {
-        
+
+    // Check if the current magnitude exceeds the dynamic step threshold
+    if (currentMagnitude > _thresholds[currentActivity]!) {
+      // Verify step timing
+      if (_lastStepTime != null) {
+        Duration timeSinceLastStep = DateTime.now().difference(_lastStepTime!);
+
+        if (timeSinceLastStep.inMilliseconds >= metrics.minStepInterval &&
+            timeSinceLastStep.inMilliseconds <= metrics.maxStepInterval) {
+          _recordStep();
+        }
+      } else {
+        _recordStep();
+      }
+    }
+  }
+
+  void _detectStepWithPeakValley(double currentMagnitude) {
+    ActivityMetrics metrics = _activityMetrics[currentActivity]!;
+
+    // Check if current value is a peak or valley
+    bool isPotentialPeak = true;
+    bool isPotentialValley = true;
+
+    // Compare with surrounding values in the window
+    for (double value in _recentMagnitudes) {
+      if (value > currentMagnitude) isPotentialPeak = false;
+      if (value < currentMagnitude) isPotentialValley = false;
+    }
+
+    if (isPotentialPeak && !_isPeak) {
+      _lastPeak = currentMagnitude;
+      _isPeak = true;
+
+      // Check if this completes a step
+      if (_lastValley != 0 && (_lastPeak - _lastValley) > _stepThreshold) {
+        // Verify step timing
         if (_lastStepTime != null) {
-          Duration timeSinceLastStep = DateTime.now().difference(_lastStepTime!);
-          
+          Duration timeSinceLastStep =
+              DateTime.now().difference(_lastStepTime!);
+
           if (timeSinceLastStep.inMilliseconds >= metrics.minStepInterval &&
               timeSinceLastStep.inMilliseconds <= metrics.maxStepInterval) {
             _recordStep();
@@ -142,46 +196,87 @@ class _DashboardPageState extends State<DashboardPage> {
           _recordStep();
         }
       }
-      
-      _isStepInProgress = current > threshold;
+    } else if (isPotentialValley && _isPeak) {
+      _lastValley = currentMagnitude;
+      _isPeak = false;
     }
   }
 
   void _recordStep() {
-    _lastStepTime = DateTime.now();
-    setState(() {
-      steps++;
-      _updateCadence();
-    });
+    DateTime now = DateTime.now();
+
+    if (_lastStepTime != null) {
+      Duration stepInterval = now.difference(_lastStepTime!);
+
+      // Validate step interval
+      if (stepInterval.inMilliseconds >=
+              _activityMetrics[currentActivity]!.minStepInterval &&
+          stepInterval.inMilliseconds <=
+              _activityMetrics[currentActivity]!.maxStepInterval) {
+        // Calculate current cadence
+        double instantCadence = 60000 / stepInterval.inMilliseconds;
+
+        // Reject unrealistic cadence
+        if (instantCadence > 220 || instantCadence < 40) {
+          return;
+        }
+
+        _lastStepTime = now;
+        setState(() {
+          steps++;
+          _updateCadence();
+          _updateRealTimeMetrics();
+        });
+      }
+    } else {
+      _lastStepTime = now;
+      setState(() {
+        steps++;
+        _updateCadence();
+        _updateRealTimeMetrics();
+      });
+    }
   }
 
-  double _calculateDynamicThreshold() {
-    if (_accelerometerValues.length < _windowSize) return _thresholds[currentActivity]!;
-    
+  void _calibrateStepDetection() {
+    if (_accelerometerValues.length < _windowSize) return;
+
+    // Calculate dynamic step threshold based on recent activity
     double mean = _accelerometerValues.reduce((a, b) => a + b) / _windowSize;
     double variance = _accelerometerValues
-        .map((v) => pow(v - mean, 2))
-        .reduce((a, b) => a + b) / _windowSize;
-    
-    return mean + sqrt(variance) * 1.5;
+            .map((v) => pow(v - mean, 2))
+            .reduce((a, b) => a + b) /
+        _windowSize;
+
+    // Adjust threshold based on activity type and intensity
+    double dynamicThreshold = mean + sqrt(variance) * 1.5;
+    if (currentActivity == 'run') {
+      dynamicThreshold *= 1.2; // Higher threshold for running
+    }
+
+    // Update step detection parameters
+    setState(() {
+      _thresholds[currentActivity] = dynamicThreshold;
+    });
   }
 
   void _updateRealTimeMetrics() {
     ActivityMetrics metrics = _activityMetrics[currentActivity]!;
-    
+
     if (_lastStepTime != null) {
       Duration activityDuration = DateTime.now().difference(_activityStartTime);
       timeInMinutes = activityDuration.inMinutes;
-      
+
       if (steps > 0) {
         distance = steps * metrics.strideLength / 1000;
         currentSpeed = distance / (activityDuration.inSeconds / 3600);
-        
+
         speedHistory.add(currentSpeed);
         if (speedHistory.length > 10) speedHistory.removeAt(0);
-        
+
         maxSpeed = max(maxSpeed, currentSpeed);
-        averageSpeed = speedHistory.reduce((a, b) => a + b) / speedHistory.length;
+        averageSpeed =
+            speedHistory.reduce((a, b) => a + b) / speedHistory.length;
       }
     }
   }
@@ -190,44 +285,49 @@ class _DashboardPageState extends State<DashboardPage> {
     if (_lastStepTime != null) {
       Duration window = const Duration(seconds: 60);
       DateTime windowStart = DateTime.now().subtract(window);
-      
+
       int recentSteps = _timestampedValues
           .where((timestamp) => timestamp.isAfter(windowStart))
           .length;
-      
+
       cadence = recentSteps;
     }
   }
 
   void _updateStats() {
     ActivityMetrics metrics = _activityMetrics[currentActivity]!;
-    
+
     setState(() {
-      double intensityFactor = currentSpeed / (currentActivity == 'run' ? 10 : 20);
+      double intensityFactor =
+          currentSpeed / (currentActivity == 'run' ? 10 : 20);
       double weightFactor = 70;
-      
-      calories = steps * metrics.caloriesPerStep * intensityFactor * (weightFactor / 70);
-      
+
+      calories = steps *
+          metrics.caloriesPerStep *
+          intensityFactor *
+          (weightFactor / 70);
+
       if (distance > 0 && timeInMinutes > 0) {
         avgPace = timeInMinutes / distance;
       }
-      
-      heartRate = 70 + (currentActivity == 'run' ? 
-          (steps ~/ 100 * 5).clamp(0, 100) :
-          (steps ~/ 150 * 3).clamp(0, 80));
+
+      heartRate = 70 +
+          (currentActivity == 'run'
+              ? (steps ~/ 100 * 5).clamp(0, 100)
+              : (steps ~/ 150 * 3).clamp(0, 80));
     });
   }
 
   Future<void> _loadTodayStats() async {
     if (userId.isEmpty) return;
-    
+
     final today = DateTime.now().toString().split(' ')[0];
     final docRef = FirebaseFirestore.instance
         .collection('fitness_stats')
         .doc(userId)
         .collection('daily')
         .doc(today);
-    
+
     final doc = await docRef.get();
     if (doc.exists) {
       final data = doc.data() as Map<String, dynamic>;
@@ -243,14 +343,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _saveStatsToFirebase() async {
     if (userId.isEmpty) return;
-    
+
     final today = DateTime.now().toString().split(' ')[0];
     final statsRef = FirebaseFirestore.instance
         .collection('fitness_stats')
         .doc(userId)
         .collection('daily')
         .doc(today);
-    
+
     await statsRef.set({
       'steps': steps,
       'calories': calories,
@@ -268,21 +368,21 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadWeeklyProgress() async {
     if (userId.isEmpty) return;
-    
+
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    
+
     for (int i = 0; i < 7; i++) {
       final date = weekStart.add(Duration(days: i));
       final dateStr = date.toString().split(' ')[0];
-      
+
       final doc = await FirebaseFirestore.instance
           .collection('fitness_stats')
           .doc(userId)
           .collection('daily')
           .doc(dateStr)
           .get();
-      
+
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
@@ -418,64 +518,62 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-Widget _buildWeeklyProgress() {
-  return Container(
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Weekly Progress',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+  Widget _buildWeeklyProgress() {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
           ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(7, (index) {
-            final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            return Column(
-              children: [
-                CircleAvatar(
-                  radius: 15,
-                  backgroundColor: weeklyProgress[index]
-                      ? Colors.green
-                      : Colors.grey[300],
-                  child: const Icon(
-                    Icons.check,
-                    size: 16,
-                    color: Colors.white,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Weekly Progress',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (index) {
+              final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+              return Column(
+                children: [
+                  CircleAvatar(
+                    radius: 15,
+                    backgroundColor:
+                        weeklyProgress[index] ? Colors.green : Colors.grey[300],
+                    child: const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  days[index],
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                  const SizedBox(height: 4),
+                  Text(
+                    days[index],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
-            );
-          }),
-        ),
-      ],
-    ),
-  );
-}
-
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildActivitySelector() {
     return Container(
@@ -576,8 +674,10 @@ Widget _buildWeeklyProgress() {
             ),
           ),
           const SizedBox(height: 15),
-          _buildMetricRow('Current Speed', '${currentSpeed.toStringAsFixed(1)} km/h'),
-          _buildMetricRow('Average Speed', '${averageSpeed.toStringAsFixed(1)} km/h'),
+          _buildMetricRow(
+              'Current Speed', '${currentSpeed.toStringAsFixed(1)} km/h'),
+          _buildMetricRow(
+              'Average Speed', '${averageSpeed.toStringAsFixed(1)} km/h'),
           _buildMetricRow('Max Speed', '${maxSpeed.toStringAsFixed(1)} km/h'),
           _buildMetricRow('Cadence', '$cadence spm'),
           _buildMetricRow('Heart Rate', '$heartRate bpm'),
@@ -613,139 +713,138 @@ Widget _buildWeeklyProgress() {
     );
   }
 
- Widget _buildNavigationCards() {
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildSmallCard(
-                'Tasks',
-                Icons.check_circle_outline,
-                'Track your fitness goals',
-                const Color.fromARGB(255, 128, 193, 240),
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Fitnesstask()),
+  Widget _buildNavigationCards() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildSmallCard(
+                  'Tasks',
+                  Icons.check_circle_outline,
+                  'Track your fitness goals',
+                  const Color.fromARGB(255, 128, 193, 240),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Fitnesstask()),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildSmallCard(
-                'Rewards',
-                Icons.star_outline,
-                'View your achievements',
-                const Color.fromARGB(255, 242, 231, 81),
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RewardsPage()),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildSmallCard(
+                  'Rewards',
+                  Icons.star_outline,
+                  'View your achievements',
+                  const Color.fromARGB(255, 242, 231, 81),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RewardsPage()),
+                  ),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildLargeCard(
+            'AI Assistant',
+            Icons.sports_gymnastics,
+            'Get personalized workout advice',
+            const Color.fromARGB(255, 89, 236, 101),
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Fitnessaiassistances()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmallCard(
+    String title,
+    IconData icon,
+    String subtitle,
+    Color backgroundColor,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 24),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        _buildLargeCard(
-          'AI Assistant',
-          Icons.sports_gymnastics,
-          'Get personalized workout advice',
-          const Color.fromARGB(255, 89, 236, 101),
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Fitnessaiassistances()),
-          ),
+      ),
+    );
+  }
+
+  Widget _buildLargeCard(
+    String title,
+    IconData icon,
+    String subtitle,
+    Color backgroundColor,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
         ),
-      ],
-    ),
-  );
-}
-
-Widget _buildSmallCard(
-  String title,
-  IconData icon,
-  String subtitle,
-  Color backgroundColor,
-  VoidCallback onTap,
-) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 24),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: const Color.fromARGB(255, 90, 89, 88),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-Widget _buildLargeCard(
-  String title,
-  IconData icon,
-  String subtitle,
-  Color backgroundColor,
-  VoidCallback onTap,
-) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: const Color.fromARGB(255, 90, 89, 88),
-            ),
-          ),
-        ],
-        
-      ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   void dispose() {

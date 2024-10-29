@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-class MentalWellbeingChatbot extends StatefulWidget {
-  const MentalWellbeingChatbot({super.key});
+class SheHelpChatbot extends StatefulWidget {
+  const SheHelpChatbot({super.key});
 
   @override
-  _MentalWellbeingChatbotState createState() => _MentalWellbeingChatbotState();
+  _SheHelpChatbotState createState() => _SheHelpChatbotState();
 }
 
-class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
+class _SheHelpChatbotState extends State<SheHelpChatbot> {
   late WebViewController _controller;
   bool isLoading = true;
 
@@ -32,7 +32,8 @@ class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
         ),
       )
       ..loadRequest(
-        Uri.parse('https://chat-flask-app-xnxbb73wka-uc.a.run.app/'),
+        Uri.parse(
+            'https://66cc6cd79d776746e0ca9720--effulgent-semifreddo-39d899.netlify.app/'),
       );
   }
 
@@ -47,8 +48,8 @@ class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.blue.shade800,
-                  Colors.blue.shade400,
+                  Colors.purple.shade800,
+                  Colors.purple.shade400,
                 ],
               ),
             ),
@@ -61,13 +62,13 @@ class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.healing,
+                          Icons.support_agent,
                           color: Colors.white,
                           size: 32,
                         ),
                         SizedBox(width: 10),
                         Text(
-                          'Mental Wellbeing',
+                          'She Help',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -78,7 +79,7 @@ class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      'Your safe space for mental health support',
+                      'Your safe space for support and guidance',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
@@ -98,7 +99,7 @@ class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
                   Center(
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.blue.shade400,
+                        Colors.purple.shade400,
                       ),
                     ),
                   ),
@@ -111,7 +112,7 @@ class _MentalWellbeingChatbotState extends State<MentalWellbeingChatbot> {
         onPressed: () {
           _controller.reload();
         },
-        backgroundColor: Colors.blue.shade400,
+        backgroundColor: Colors.purple.shade400,
         child: Icon(Icons.refresh, color: Colors.white),
         tooltip: 'Refresh chat',
       ),

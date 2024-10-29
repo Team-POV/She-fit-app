@@ -20,6 +20,7 @@ import 'package:she_fit_app/screens/calculators/pregnancy_test_calculator.dart';
 import 'package:she_fit_app/screens/calculators/ultrasound_due_date_calculator.dart';
 import 'package:she_fit_app/screens/calculators/GlycemicMonitoring.dart';
 import 'package:she_fit_app/screens/calculators/PrenatalMonitoring.dart';
+import 'package:she_fit_app/pages/she-fit-chat-boat.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => SignUpPage(),
         '/menstrual-tracker': (context) => ReproductiveHealthPage(),
         '/pregnancy-tracker': (context) => PregnancyTrackingPage(),
+        '/shefit-chat': (context) => SheHelpChatbot(),
 
         // Calculator routes
         '/calculator': (context) => CalculatorHome(),

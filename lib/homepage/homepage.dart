@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:she_fit_app/Fiteness/fitnessHomepage.dart';
 import 'package:she_fit_app/MentalWellbeing/MentalHomepage.dart';
 import 'package:she_fit_app/services/auth_services.dart';
-import 'package:she_fit_app/pages/reproductivehealth.dart';
 import 'package:she_fit_app/pages/repHomepage.dart';
 
 class HomePage extends StatefulWidget {
@@ -180,7 +179,7 @@ class _HomePageState extends State<HomePage> {
           gradientColors: [Color(0xFF00796B), Color(0xFF26A69A)],
           onTap: () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Mentalhomepage()),
+            MaterialPageRoute(builder: (context) => MentalWellbeingChatbot()),
           ),
         ),
       ],
