@@ -124,8 +124,8 @@ class Rephomepage extends StatelessWidget {
         ),
         SizedBox(height: 20),
         _buildHealthCard(
-          title: 'She Fit Chat Bot',
-          description: ' feel free to Learn about body changes and health',
+          title: 'She Fit Chat-Bot for reproductive and mental',
+          description: 'Feel free to Learn about body changes and health',
           imagePath: 'assets/images/chats.png',
           gradientColors: [Color(0xFF7B1FA2), Color(0xFFAB47BC)],
           onTap: () => Navigator.pushNamed(context, '/shefit-chat'),
@@ -207,7 +207,7 @@ class Rephomepage extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
