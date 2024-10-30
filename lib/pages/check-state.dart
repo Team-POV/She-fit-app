@@ -11,8 +11,9 @@ class _StatementCheckerPageState extends State<StatementCheckerPage> {
   final TextEditingController _controller = TextEditingController();
   String _result = '';
   Color _resultColor = Colors.black;
+  List<String> _detectedPatterns = [];
 
-  // List of problematic patterns based on the research document
+  // Enhanced patterns list with more variations and categories
   final List<Map<String, dynamic>> _abusivePatterns = [
     {
       'category': 'Religious/Patriarchal Discrimination',
@@ -421,115 +422,151 @@ class _StatementCheckerPageState extends State<StatementCheckerPage> {
       ]
     },
     {
-      'category': 'Abusive',
+      'category': 'Abusive Language',
       'patterns': [
-        'jerk',
-        'idiot',
-        'fool',
-        'loser',
-        'moron',
-        'scumbag',
-        'slut',
-        'bastard',
-        'prick',
-        'whore',
-        'dumbass',
-        'creep',
-        'asshole',
-        'twat',
-        'douche',
-        'clown',
-        'wanker',
-        'knob',
-        'pig',
-        'snake',
-        'rat',
-        'freak',
-        'sucker',
-        'pansy',
-        'sissy',
-        'nutcase',
-        'lowlife',
-        'wuss',
-        'git',
-        'weasel',
-        'troll',
-        'loser',
-        'slug',
-        'nebbish',
-        'dimwit',
-        'twit',
-        'sap',
-        'dork',
-        'hussy',
-        'slob',
-        'fuck you'
-            'leech',
-        'moron',
-        'knucklehead',
-        'scoundrel',
-        'fart',
-        'dunce',
-        'clod',
-        'imbecile',
-        'nitwit',
-        'bonehead',
-        'numbnuts',
-        'gutter rat',
-        'backstabber',
-        'whiner',
-        'pest',
-        'jerkwad',
-        'scab',
-        'puke',
-        'tool',
-        'chump',
-        'dipstick',
-        'airhead',
-        'doofus',
-        'halfwit',
-        'potato',
-        'dorkface',
-        'skank',
-        'butthead',
-        'knucklehead',
-        'slacker',
-        'drip',
-        'gobshite',
-        'bonehead',
-        'fool',
-        'screw-up',
-        'loser',
-        'sneak',
-        'dolt',
-        'wimp',
-        'blowhard'
+        // Enhanced abusive patterns with variations and common misspellings
+        'fuck', 'fck', 'f*ck', 'fu*k', 'fuk',
+        'shit', 'sh*t', 'shyt',
+        'bitch', 'b*tch', 'bytch', 'biatch',
+        'ass', 'ass', 'a**',
+        'bastard', 'b*stard',
+        'dick', 'd*ck', 'dik',
+        'whore', 'hoe', 'ho',
+        'slut', 'sl*t',
+        'idiot', 'idi*t',
+        'stupid', 'stup*d',
+        'dumb', 'dumm',
+        'retard', 'r*tard',
+        'moron', 'mor*n',
+        'cunt', 'c*nt',
+        'pussy', 'pu**y',
+        'cock', 'c*ck',
+        'piss', 'p*ss',
+        'damn', 'd*mn',
+        'hell', 'h*ll',
+        'shut up',
+        'stfu',
+        'kys',
+        'kill yourself',
+        'die',
+        'kys',
+        'kms',
+        'suicide',
+        // Racial and ethnic slurs (censored)
+        'n*****', 'n****',
+        'ch***', 'ch****',
+        'w*****', 'w****',
+        // Additional abusive terms
+        'loser', 'l*ser',
+        'waste', 'w*ste',
+        'trash', 'tr*sh',
+        'garbage',
+        'worthless',
+        'useless',
+        'piece of shit', 'pos',
+        'scum', 'sc*m',
+        'die', 'rot', 'burn',
+        'hate you', 'hate u',
+        'kys', 'kms',
+        // Threatening language
+        'kill', 'murder', 'hurt',
+        'punch', 'beat', 'slap',
+        'attack', 'fight', 'hit'
       ]
     },
+    {
+      'category': 'Harassment',
+      'patterns': [
+        'stalking',
+        'stalk',
+        'following',
+        'watching you',
+        'find you',
+        'know where you',
+        'come for you',
+        'get you',
+        'hunt you',
+        'track you',
+        'follow you home',
+        'show up at',
+        'wait for you',
+        'coming for you'
+      ]
+    },
+    {
+      'category': 'Sexual Harassment',
+      'patterns': [
+        'sexy',
+        'hot',
+        'beautiful',
+        'gorgeous',
+        'pretty',
+        'cute',
+        'body',
+        'figure',
+        'curves',
+        'dating',
+        'date me',
+        'go out',
+        'single',
+        'relationship',
+        'marry',
+        'wedding',
+        'boyfriend',
+        'girlfriend',
+        'love you',
+        'love u',
+        'kiss',
+        'touch',
+        'feel',
+        'sex',
+        'bed',
+        'sleep'
+      ]
+    }
   ];
+
   void _analyzeStatement() {
     String statement = _controller.text.toLowerCase();
-    List<String> foundPatterns = [];
-    String category = '';
+    _detectedPatterns = [];
+    Set<String> categories = {};
 
+    // Split input into words for more accurate detection
+    List<String> words = statement.split(RegExp(r'\s+'));
+
+    // Check for exact matches and partial matches
     for (var patternGroup in _abusivePatterns) {
       for (var pattern in patternGroup['patterns'] as List<String>) {
-        if (statement.contains(pattern)) {
-          foundPatterns.add(pattern);
-          category = patternGroup['category'] as String;
-          break;
+        // Check for exact pattern matches
+        if (statement.contains(pattern.toLowerCase())) {
+          _detectedPatterns.add(pattern);
+          categories.add(patternGroup['category'] as String);
+        }
+
+        // Check for partial matches in individual words
+        for (var word in words) {
+          if (pattern.toLowerCase().contains(word) ||
+              word.contains(pattern.toLowerCase())) {
+            if (word.length > 2) {
+              // Avoid matching very short words
+              _detectedPatterns.add(word);
+              categories.add(patternGroup['category'] as String);
+            }
+          }
         }
       }
     }
 
     setState(() {
-      if (foundPatterns.isEmpty) {
+      if (_detectedPatterns.isEmpty) {
         _result =
             'No obvious abusive content detected. However, if you feel uncomfortable, trust your instincts and seek support.';
         _resultColor = Colors.green;
       } else {
-        _result =
-            'WARNING: Potentially abusive content detected.\n\nCategory: $category\n\nThis statement contains concerning language. Consider reporting this incident and seeking support from relevant authorities or support groups.';
+        _result = 'WARNING: Potentially abusive content detected.\n\n'
+            'Categories: ${categories.join(", ")}\n\n'
+            'Detected patterns: ${_detectedPatterns.join(", ")}\n\n'
+            'This statement contains concerning language. Consider reporting this incident and seeking support from relevant authorities or support groups.';
         _resultColor = Colors.red;
       }
     });
@@ -542,66 +579,68 @@ class _StatementCheckerPageState extends State<StatementCheckerPage> {
         title: const Text('Statement Abuse Detector'),
         backgroundColor: Colors.purple.shade100,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Enter the statement someone made towards you:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Type the statement here...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Enter the statement someone made towards you:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _controller,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Type the statement here...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                 ),
-                filled: true,
-                fillColor: Colors.grey.shade100,
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _analyzeStatement,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Analyze Statement',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (_result.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _resultColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _resultColor),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _analyzeStatement,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: Text(
-                  _result,
-                  style: TextStyle(
-                    color: _resultColor,
-                    fontSize: 16,
+                child: const Text(
+                  'Analyze Statement',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (_result.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _resultColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _resultColor),
+                  ),
+                  child: Text(
+                    _result,
+                    style: TextStyle(
+                      color: _resultColor,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
+              const SizedBox(height: 24),
+              const Text(
+                'Note: This is a basic detection tool. If you feel unsafe or threatened, please contact local authorities or support services immediately.',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
               ),
-            const SizedBox(height: 24),
-            const Text(
-              'Note: This is a basic detection tool. If you feel unsafe or threatened, please contact local authorities or support services immediately.',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
