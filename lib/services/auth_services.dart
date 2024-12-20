@@ -23,7 +23,7 @@ class AuthService {
     required String phoneNumber,
   }) async {
     try {
-      // Create user with email and password
+      // Create user with email and password first
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -38,11 +38,17 @@ class AuthService {
         phoneNumber: phoneNumber,
       );
 
-      // Store additional user data in Firestore
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set(userModel.toMap());
+      try {
+        // Store additional user data in Firestore
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set(userModel.toMap());
+      } catch (firestoreError) {
+        // If Firestore operation fails, delete the created auth user
+        await userCredential.user?.delete();
+        throw _handleFirestoreError(firestoreError);
+      }
 
       // Store UID in SharedPreferences for persistent login
       await _saveUserSession(userCredential.user!.uid);
@@ -60,7 +66,7 @@ class AuthService {
       bool isEmail = emailOrPhone.contains('@');
 
       if (isEmail) {
-        // Sign in with email
+        // Sign in with email directly
         UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: emailOrPhone,
           password: password,
@@ -68,30 +74,59 @@ class AuthService {
         await _saveUserSession(userCredential.user!.uid);
         return userCredential;
       } else {
-        // If phone number, first get the email associated with it
-        QuerySnapshot userQuery = await _firestore
-            .collection('users')
-            .where('phoneNumber', isEqualTo: emailOrPhone)
-            .limit(1)
-            .get();
+        try {
+          // Clean phone number format (remove any spaces or special characters)
+          String cleanPhoneNumber =
+              emailOrPhone.replaceAll(RegExp(r'[^\d]'), '');
 
-        if (userQuery.docs.isEmpty) {
-          throw 'No user found with this phone number';
+          // Query Firestore for user with matching phone number
+          QuerySnapshot userQuery = await _firestore
+              .collection('users')
+              .where('phoneNumber', isEqualTo: cleanPhoneNumber)
+              .limit(1)
+              .get();
+
+          if (userQuery.docs.isEmpty) {
+            throw FirebaseAuthException(
+              code: 'user-not-found',
+              message: 'No user found with this phone number',
+            );
+          }
+
+          String email = userQuery.docs.first.get('email') as String;
+
+          // Sign in with retrieved email
+          UserCredential userCredential =
+              await _auth.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          await _saveUserSession(userCredential.user!.uid);
+          return userCredential;
+        } on FirebaseException catch (e) {
+          if (e.code == 'permission-denied') {
+            throw 'Unable to verify phone number. Please try signing in with email instead.';
+          }
+          rethrow;
         }
-
-        String email = userQuery.docs.first.get('email');
-
-        // Sign in with retrieved email
-        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-        await _saveUserSession(userCredential.user!.uid);
-        return userCredential;
       }
     } catch (e) {
       throw _handleAuthError(e);
     }
+  }
+
+  String _handleFirestoreError(dynamic e) {
+    if (e is FirebaseException) {
+      switch (e.code) {
+        case 'permission-denied':
+          return 'Permission denied. Please check your account permissions.';
+        case 'unavailable':
+          return 'Service temporarily unavailable. Please try again later.';
+        default:
+          return 'Database error: ${e.message}';
+      }
+    }
+    return e.toString();
   }
 
   // Sign Out

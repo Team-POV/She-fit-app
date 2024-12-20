@@ -188,8 +188,8 @@ class _SignInPageState extends State<SignInPage>
                               child: TextFormField(
                                 controller: _emailOrPhoneController,
                                 decoration: InputDecoration(
-                                  labelText: 'Email or Phone Number',
-                                  hintText: 'Enter your email or phone number',
+                                  labelText: 'Email ',
+                                  hintText: 'Enter your email',
                                   prefixIcon:
                                       Icon(Icons.person, color: _primaryTeal),
                                   border: OutlineInputBorder(
